@@ -47,17 +47,18 @@ openspdd list --all
 
 OpenSPDD commands used in this guide:
 
-| Command | Purpose |
-| --- | --- |
-| `spdd-story` | Split or refine enhancement ideas into focused user stories. |
-| `spdd-analysis` | Analyze a story and produce domain concepts, risks, and design direction. |
-| `spdd-reasons-canvas` | Generate the REASONS Canvas used as the implementation blueprint. |
-| `spdd-generate` | Generate or update code from the current structured prompt. |
-| `spdd-api-test` | Generate a cURL-based functional API test script. |
-| `spdd-prompt-update` | Update the structured prompt first when requirements or behavior change. |
-| `spdd-sync` | Sync code-side refactors or fixes back into the structured prompt. |
+| Command | Project-local Codex skill file | Purpose |
+| --- | --- | --- |
+| `$spdd-story` | `./.agents/skills/spdd-story/SKILL.md` | Split or refine enhancement ideas into focused user stories. |
+| `$spdd-analysis` | `./.agents/skills/spdd-analysis/SKILL.md` | Analyze a story and produce domain concepts, risks, and design direction. |
+| `$spdd-reasons-canvas` | `./.agents/skills/spdd-reasons-canvas/SKILL.md` | Generate the REASONS Canvas used as the implementation blueprint. |
+| `$spdd-generate` | `./.agents/skills/spdd-generate/SKILL.md` | Generate or update code from the current structured prompt. |
+| `$spdd-api-test` | `./.agents/skills/spdd-api-test/SKILL.md` | Generate a cURL-based functional API test script. |
+| `$spdd-prompt-update` | `./.agents/skills/spdd-prompt-update/SKILL.md` | Update the structured prompt first when requirements or behavior change. |
+| `$spdd-sync` | `./.agents/skills/spdd-sync/SKILL.md` | Sync code-side refactors or fixes back into the structured prompt. |
 
-OpenSPDD writes Codex skills under `.agents/skills/<skill-id>/SKILL.md`.
+OpenSPDD writes Codex skills under `./.agents/skills/<skill-id>/SKILL.md`.
+The leading dot in `./.agents` is part of the generated directory name.
 For optional commands, generate the skill before invoking it.
 The first time you run `codex` in this repo, approve the project trust prompt if
 Codex shows one. Some Codex versions need that before project skills appear.
@@ -75,146 +76,86 @@ arrive at a similar result.
 
 | Step | Expected revision |
 | --- | --- |
-| 0 | Create the initial Spring Boot billing service |
-| 1 | Normalize the database environment for plans and subscriptions |
-| 2 | Initialize OpenSPDD Codex skills |
-| 3 | Generate the initial analysis document |
-| 4 | Generate the initial REASONS Canvas |
-| 5 | Add architecture intent to the Canvas |
-| 6 | Generate the initial product code |
-| 7 | Correct active subscription lookup through prompt-first update |
-| 8 | Refactor `calculateBill` and sync the Canvas |
-| 9 | Extract magic numbers in `Bill` and sync the Canvas |
-| 10 | Remove unused methods and sync the Canvas |
-| 11 | Add initial tests |
-| 12 | Add the broad enhancement story |
-| 13 | Split the broad story into focused stories |
-| 14 | Generate enhancement analysis |
-| 15 | Generate enhancement REASONS Canvas |
-| 16 | Generate enhancement code |
-| 17 | Generate the functional API test script |
-| 18 | Refactor remaining magic numbers and sync the Canvas |
-| 19 | Generate the enhancement test prompt |
-| 20 | Generate enhancement unit tests |
-| 21 | Update the structured prompt for required `model_id` |
-| 22 | Generate code from the updated prompt |
-| 23 | Update the API test command output |
-| 24 | Add the story command and first initial story |
-| 25 | Add the initial enhancement idea |
-| 26 | Generate the second initial story |
-| 27 | Rename initial story files |
+| 0 | Copy the prepared initial files |
+| 1 | Verify the prepared starting point |
+| 2 | Init the repo |
+| 3 | Initialize OpenSPDD Codex skills |
+| 4 | Generate the initial analysis document |
+| 5 | Generate the initial REASONS Canvas |
+| 6 | Add architecture intent to the Canvas |
+| 7 | Generate the initial product code |
+| 8 | Correct active subscription lookup through prompt-first update |
+| 9 | Refactor `calculateBill` and sync the Canvas |
+| 10 | Extract magic numbers in `Bill` and sync the Canvas |
+| 11 | Remove unused methods and sync the Canvas |
+| 12 | Add initial tests |
+| 13 | Add the broad enhancement story |
+| 14 | Split the broad story into focused stories |
+| 15 | Generate enhancement analysis |
+| 16 | Generate enhancement REASONS Canvas |
+| 17 | Generate enhancement code |
+| 18 | Generate the functional API test script |
+| 19 | Refactor remaining magic numbers and sync the Canvas |
+| 20 | Generate the enhancement test prompt |
+| 21 | Generate enhancement unit tests |
+| 22 | Update the structured prompt for required `model_id` |
+| 23 | Generate code from the updated prompt |
+| 24 | Update the API test command output |
+| 25 | Add the story command and first initial story |
+| 26 | Add the initial enhancement idea |
+| 27 | Generate the second initial story |
+| 28 | Rename initial story files |
 
 ## Part 1: Replay The Initial Billing Service
 
-The article focuses on the enhancement, but the reference history begins with a
-minimal Spring Boot seed project. Create that seed project first, then generate
-the original billing service using SPDD.
+The article focuses on the enhancement, but the reference history begins from an
+existing billing service. Copy the prepared initial files first, then start the
+OpenSPDD workflow from that baseline.
 
-### Step 0: Create The Initial Project From Empty
+### Step 0: Copy The Prepared Initial Files
 
-Prompt:
-
-```text
-Bootstrap an empty repository for a Spring Boot token billing service.
-
-Create only the initial project skeleton and seed requirement. Do not implement
-the usage API, controller, service, repositories, domain model, or DTOs yet.
-
-Files to create:
-- .gitignore for a Java/Gradle/Spring Boot project
-- settings.gradle with rootProject.name = 'token-billing'
-- build.gradle for Java 21, Spring Boot 3.5.x, dependency-management, Web,
-  Data JPA, Validation, Flyway, PostgreSQL runtime, H2 runtime, Lombok, and
-  Spring Boot test dependencies
-- compose.yaml with a postgres service:
-  - POSTGRES_DB=token_billing
-  - POSTGRES_USER=postgres
-  - POSTGRES_PASSWORD=postgres
-  - host port 54323 mapped to container port 5432
-- src/main/java/org/tw/token_billing/TokenBillingApplication.java
-- src/test/java/org/tw/token_billing/TokenBillingApplicationTests.java
-- src/main/resources/application.yml configured for the postgres service,
-  Flyway enabled, and Hibernate ddl-auto validate
-- src/main/resources/db/migration/V1__Create_tables.sql with the initial
-  denormalized schema:
-  - customers table with id, name, monthly_quota, used_tokens_this_month,
-    overage_rate_per_1k, created_at, updated_at
-  - bills table with id, customer_id, prompt_tokens, completion_tokens,
-    total_tokens, included_tokens_used, overage_tokens, total_charge,
-    calculated_at
-  - indexes on bills(customer_id) and bills(calculated_at)
-- requirements/token-usage-billing-story.md with the initial billing story:
-  Background, Business Value, Scope In, Scope Out, and five Given/When/Then
-  acceptance criteria for customer existence, non-negative token counts,
-  within-quota billing, over-quota billing, and HTTP 201 successful return
-- README.md as an application README for the Token Billing Service, not this
-  workshop guide
-
-Keep the package name org.tw.token_billing.
-Use ASCII text.
-```
-
-Generate the Gradle wrapper after the AI creates `build.gradle`:
+Current workshop repository includes `./init_files/` with the initial Spring Boot
+billing service and normalized plan/subscription environment. Assuming you are in
+`../spdd-workshop-snapshot`, copy those files into the new repository root:
 
 ```bash
-gradle wrapper --gradle-version 8.14 --distribution-type bin
+cp -R ../spdd-workshop/init_files/. .
 ```
+These files are based on the initial setup commits from the reference
+`../token-billing` repository.
 
-If you do not have Gradle installed locally, create the wrapper with your normal
-Spring Boot/Gradle bootstrap method before committing. The first commit should
-include `gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.jar`, and
-`gradle/wrapper/gradle-wrapper.properties`.
+### Step 1: Verify The Prepared Starting Point
 
-Verify the seed project:
+The starter application is configured to use PostgreSQL at
+`localhost:54323`, and the Spring context test runs Flyway against that
+database. Start the bundled Compose database before running tests:
 
 ```bash
+docker compose up -d
 ./gradlew test
 ```
 
-Checkpoint:
+### Step 2: Commit The Starting Point
+
+Commit the copied starting point with the initial reference commit message:
 
 ```bash
-git status --short
-git add .gitignore README.md build.gradle settings.gradle compose.yaml gradlew gradlew.bat gradle requirements src
+git add .
 git commit -m "[000] feat: init the repo"
 ```
 
-### Step 1: Update The Environment
+### Step 3: Initialize OpenSPDD Skills
 
-The initial seed schema stores quota and rate directly on `customers`. Update the
-environment so the later SPDD workflow starts from a normalized customer, plan,
-subscription, and bill model.
+Generate the project-scoped SPDD skills for Codex. You run these commands once
+from the terminal; OpenSPDD writes Codex skill files under `./.agents/skills/`.
 
-Prompt:
-
-```text
-Update the initial environment for the token billing service.
-
-Scope:
-- Keep the existing Spring Boot project structure.
-- Update requirements/token-usage-billing-story.md only if it has drifted from the current billing story.
-- Refactor src/main/resources/db/migration/V1__Create_tables.sql so:
-  - customers contains id, name, created_at only.
-  - pricing_plans contains id, name, monthly_quota, overage_rate_per_1k, created_at.
-  - customer_subscriptions links customer_id to plan_id with effective_from, effective_to, created_at.
-  - bills stores prompt_tokens, completion_tokens, total_tokens, included_tokens_used, overage_tokens, total_charge, calculated_at.
-  - indexes exist for customer_subscriptions(customer_id), bills(customer_id), and bills(calculated_at).
-  - seed plans include PLAN-FREE, PLAN-STARTER, PLAN-PRO, PLAN-ENTERPRISE.
-  - seed customers include CUST-001, CUST-002, CUST-003.
-  - seed subscriptions assign those customers to starter, free, and enterprise plans.
-Do not implement Java code yet.
-```
-
-Checkpoint:
-
-```bash
-git add requirements/token-usage-billing-story.md src/main/resources/db/migration/V1__Create_tables.sql
-git commit -m "[000] feat: update the environment"
-```
-
-### Step 2: Initialize OpenSPDD Skills
-
-Generate the project-scoped SPDD skills:
+This initialization is needed for the Codex-based workshop flow. Later steps ask
+Codex to execute prompts such as `$spdd-analysis`, `$spdd-reasons-canvas`, and
+`$spdd-generate`. Codex can only understand those project commands after the
+corresponding skill files have been generated. Committing the generated files
+also keeps the workflow instructions and agent configuration tied to this
+repository, instead of depending on whichever OpenSPDD setup happens to be
+installed on a user machine.
 
 ```bash
 openspdd --tool codex init
@@ -224,32 +165,50 @@ openspdd --tool codex generate --all
 Expected OpenSPDD skill artifacts:
 
 ```text
-.agents/skills/spdd-analysis/SKILL.md
-.agents/skills/spdd-reasons-canvas/SKILL.md
-.agents/skills/spdd-generate/SKILL.md
-.agents/skills/spdd-prompt-update/SKILL.md
-.agents/skills/spdd-sync/SKILL.md
+./.agents/skills/spdd-analysis/SKILL.md
+./.agents/skills/spdd-analysis/agents/openai.yaml
+./.agents/skills/spdd-generate/SKILL.md
+./.agents/skills/spdd-generate/agents/openai.yaml
+./.agents/skills/spdd-prompt-update/SKILL.md
+./.agents/skills/spdd-prompt-update/agents/openai.yaml
+./.agents/skills/spdd-reasons-canvas/SKILL.md
+./.agents/skills/spdd-reasons-canvas/agents/openai.yaml
+./.agents/skills/spdd-sync/SKILL.md
+./.agents/skills/spdd-sync/agents/openai.yaml
 ```
 
-Commit the generated `.agents/skills/` files.
+Commit the generated `./.agents/skills/` files.
 
 Checkpoint:
 
 ```bash
-git add .agents
+git add .
 git commit -m "[000] feat: initialize the commands for the SPDD workflow"
 ```
 
-### Step 3: Generate The Initial Analysis
+### Step 4: Generate The Initial Analysis
+
+From this point forward, each `Prompt:` block is text to run in Codex. Start
+Codex from your new repository, `../spdd-workshop-snapshot`, paste the prompt,
+wait until Codex completes the requested file changes successfully, then exit
+Codex before continuing with the next terminal commands in the guide.
+
+The `$spdd-*` commands derive artifact filenames from the requirement context
+and current time. In the filenames below, `{timestamp}` represents the timestamp
+generated by the command, for example
+`./spdd/analysis/GGQPA-XXX-{timestamp}-[Analysis]-token-usage-billing.md`.
+The generated SPDD skill treats this position as the
+Jira or ticket key: `GGQPA-XXX` means default ticket, and `GGQPA-001`
+corresponds to the first enhancement story in the reference history.
 
 Prompt:
 
 ```text
-$spdd-analysis @requirements/token-usage-billing-story.md
-
-Save the generated analysis as:
-spdd/analysis/GGQPA-XXX-202603131734-[Analysis]-token-usage-billing.md
+$spdd-analysis @./requirements/token-usage-billing-story.md
 ```
+
+Generated analysis file:
+`./spdd/analysis/GGQPA-XXX-{timestamp}-[Analysis]-token-usage-billing.md`
 
 Review for:
 
@@ -262,20 +221,20 @@ Review for:
 Checkpoint:
 
 ```bash
-git add spdd/analysis/GGQPA-XXX-202603131734-[Analysis]-token-usage-billing.md
+git add .
 git commit -m "[000] feat: generate an analysis document, first round"
 ```
 
-### Step 4: Generate The Initial REASONS Canvas
+### Step 5: Generate The Initial REASONS Canvas
 
 Prompt:
 
 ```text
-$spdd-reasons-canvas @spdd/analysis/GGQPA-XXX-202603131734-[Analysis]-token-usage-billing.md
-
-Save the generated structured prompt as:
-spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+$spdd-reasons-canvas @./spdd/analysis/GGQPA-XXX-{timestamp}-[Analysis]-token-usage-billing.md
 ```
+
+Generated structured prompt file:
+`./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md`
 
 Review the canvas before code generation. It should cover:
 
@@ -288,11 +247,11 @@ Review the canvas before code generation. It should cover:
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+git add .
 git commit -m "[000] feat: generate a structured prompt based on the analysis doc, first round"
 ```
 
-### Step 5: Add Architecture Intent To The Canvas
+### Step 6: Add Architecture Intent To The Canvas
 
 Before generating code, refine the canvas with the architecture rules that the
 reference repo used.
@@ -300,7 +259,7 @@ reference repo used.
 Prompt:
 
 ```text
-$spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+$spdd-prompt-update @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
 
 Update the structured prompt before code generation with these architectural decisions:
 
@@ -326,16 +285,16 @@ Expected canvas changes:
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+git add .
 git commit -m "[000] feat: communicate additional intent to the AI -- the architecture and some design practices"
 ```
 
-### Step 6: Generate The Initial Product Code
+### Step 7: Generate The Initial Product Code
 
 Prompt:
 
 ```text
-$spdd-generate @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+$spdd-generate @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
 
 Generate the product code task by task from the Operations section.
 Do not add unit tests yet.
@@ -344,15 +303,15 @@ Keep the implementation inside the packages and boundaries defined by the canvas
 
 Expected production artifacts:
 
-- `controller/UsageController.java`
-- `domain/Customer.java`, `PricingPlan.java`, `CustomerSubscription.java`, `Bill.java`
-- `dto/UsageRequest.java`, `BillResponse.java`, `ErrorResponse.java`
-- `exception/CustomerNotFoundException.java`, `NoActiveSubscriptionException.java`, `GlobalExceptionHandler.java`
-- repository interfaces under `repository/`
-- JPA adapters, Spring Data repositories, POs, and mappers under `infrastructure/persistence/`
-- `service/BillingService.java`
-- `service/impl/BillingServiceImpl.java`
-- optional generated smoke script `scripts/api-test.sh`
+- `./src/main/java/org/tw/token_billing/controller/UsageController.java`
+- domain classes under `./src/main/java/org/tw/token_billing/domain/`
+- DTOs under `./src/main/java/org/tw/token_billing/dto/`
+- exceptions under `./src/main/java/org/tw/token_billing/exception/`
+- repository interfaces under `./src/main/java/org/tw/token_billing/repository/`
+- JPA adapters, Spring Data repositories, POs, and mappers under `./src/main/java/org/tw/token_billing/infrastructure/persistence/`
+- `./src/main/java/org/tw/token_billing/service/BillingService.java`
+- `./src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java`
+- optional generated smoke script `./scripts/api-test.sh`
 
 Compile before committing:
 
@@ -363,11 +322,11 @@ Compile before committing:
 Checkpoint:
 
 ```bash
-git add scripts src/main/java
+git add .
 git commit -m "[000] feat: the first round of code generated based on the structured prompt"
 ```
 
-### Step 7: Correct Active Subscription Lookup
+### Step 8: Correct Active Subscription Lookup
 
 Review result: the reference changed the subscription lookup from a list of active
 subscriptions to one optional active subscription. This is a behavior/design
@@ -376,7 +335,7 @@ correction, so update the prompt first, then the code.
 Prompt:
 
 ```text
-$spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+$spdd-prompt-update @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
 
 Business and design correction:
 Only one active subscription is allowed for a customer at a given date.
@@ -392,7 +351,7 @@ Update the relevant Operations sections:
 Follow-up prompt:
 
 ```text
-$spdd-generate @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+$spdd-generate @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
 
 Apply only the code changes needed for the active-subscription lookup correction.
 ```
@@ -400,11 +359,11 @@ Apply only the code changes needed for the active-subscription lookup correction
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md src/main/java/org/tw/token_billing
+git add .
 git commit -m "[000] feat: update the logic of querying customer subscription"
 ```
 
-### Step 8: Refactor `calculateBill`
+### Step 9: Refactor `calculateBill`
 
 This is a non-behavioral refactor, so refactor code first and sync the canvas
 afterwards.
@@ -412,7 +371,7 @@ afterwards.
 Prompt:
 
 ```text
-@src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java
+@./src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java
 
 Refactor calculateBill into small private methods without changing observable behavior:
 - validateCustomerExists(String customerId)
@@ -424,7 +383,7 @@ Keep calculateBill as the orchestration method.
 Follow-up prompt:
 
 ```text
-$spdd-sync @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+$spdd-sync @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
 
 Synchronize the BillingServiceImpl refactor back into the Operations section.
 ```
@@ -432,16 +391,16 @@ Synchronize the BillingServiceImpl refactor back into the Operations section.
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java
+git add .
 git commit -m "[000] feat: refactoring for calculateBill"
 ```
 
-### Step 9: Extract Magic Numbers In `Bill`
+### Step 10: Extract Magic Numbers In `Bill`
 
 Prompt:
 
 ```text
-@src/main/java/org/tw/token_billing/domain/Bill.java
+@./src/main/java/org/tw/token_billing/domain/Bill.java
 
 Extract billing calculation magic numbers into named constants:
 - TOKENS_PER_PRICING_UNIT = 1000
@@ -453,7 +412,7 @@ Do not change billing behavior.
 Follow-up prompt:
 
 ```text
-$spdd-sync @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+$spdd-sync @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
 
 Sync the Bill constant refactor into the structured prompt.
 ```
@@ -461,11 +420,11 @@ Sync the Bill constant refactor into the structured prompt.
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md src/main/java/org/tw/token_billing/domain/Bill.java
+git add .
 git commit -m "[000] feat: refactoring for magic numbers in the Bill"
 ```
 
-### Step 10: Remove Unused Methods
+### Step 11: Remove Unused Methods
 
 Prompt:
 
@@ -482,7 +441,7 @@ Expected removals include:
 Follow-up prompt:
 
 ```text
-$spdd-sync @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+$spdd-sync @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
 
 Sync the removed unused methods back into the structured prompt.
 ```
@@ -490,18 +449,16 @@ Sync the removed unused methods back into the structured prompt.
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md src/main/java/org/tw/token_billing
-git commit -m "[000] feat: refactoring for all the unsed meteds"
+git add .
+git commit -m "[000] feat: refactoring for all the unused methods"
 ```
 
-Use the typo in the commit message to match the reference history.
-
-### Step 11: Add Initial Tests
+### Step 12: Add Initial Tests
 
 Prompt:
 
 ```text
-Create spdd/template/TEST-SCENARIOS-TEMPLATE.md.
+Create ./spdd/template/TEST-SCENARIOS-TEMPLATE.md.
 It should define sections for controller, service, repository, DAO, model class,
 and integration test scenarios. It should require test names in the format:
 should_return_[expected_output]_when_[action]_given_[input]
@@ -511,27 +468,27 @@ Follow-up prompt:
 
 ```text
 Based on the implementation details prompt
-@spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
-combined with the template @spdd/template/TEST-SCENARIOS-TEMPLATE.md,
+@./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
+combined with the template @./spdd/template/TEST-SCENARIOS-TEMPLATE.md,
 generate the test prompt file:
-spdd/prompt/GGQPA-XXX-202603131758-[Test]-api-token-usage-billing.md
+./spdd/prompt/GGQPA-XXX-{timestamp}-[Test]-api-token-usage-billing.md
 ```
 
 Follow-up prompt:
 
 ```text
-Based on @spdd/prompt/GGQPA-XXX-202603131758-[Test]-api-token-usage-billing.md,
+Based on @./spdd/prompt/GGQPA-XXX-{timestamp}-[Test]-api-token-usage-billing.md,
 generate the corresponding unit and integration tests for the current billing implementation.
 ```
 
 Expected tests:
 
-- `UsageControllerIntegrationTest`
-- `controller/UsageControllerTest`
-- `domain/BillTest`
-- `dto/BillResponseTest`
-- `infrastructure/persistence/JpaBillRepositoryAdapterTest`
-- `service/impl/BillingServiceImplTest`
+- `./src/test/java/org/tw/token_billing/UsageControllerIntegrationTest.java`
+- `./src/test/java/org/tw/token_billing/controller/UsageControllerTest.java`
+- `./src/test/java/org/tw/token_billing/domain/BillTest.java`
+- `./src/test/java/org/tw/token_billing/dto/BillResponseTest.java`
+- `./src/test/java/org/tw/token_billing/infrastructure/persistence/JpaBillRepositoryAdapterTest.java`
+- `./src/test/java/org/tw/token_billing/service/impl/BillingServiceImplTest.java`
 
 Verify:
 
@@ -542,7 +499,7 @@ Verify:
 Checkpoint:
 
 ```bash
-git add spdd src/test
+git add .
 git commit -m "[000] feat: add tests for all the generated codes"
 ```
 
@@ -551,9 +508,9 @@ git commit -m "[000] feat: add tests for all the generated codes"
 Now implement the multi-plan, model-aware billing enhancement described in the
 SPDD article.
 
-### Step 12: Add The Broad Enhancement Story
+### Step 13: Add The Broad Enhancement Story
 
-Create `requirements/enhancement-token-usage-billing-story.md`.
+Create `./requirements/enhancement-token-usage-billing-story.md`.
 
 Use this content as the requirement to be refined by SPDD:
 
@@ -604,11 +561,11 @@ discounts.
 Checkpoint:
 
 ```bash
-git add requirements/enhancement-token-usage-billing-story.md
+git add .
 git commit -m "[000] feat: add a enhancement story"
 ```
 
-### Step 13: Split The Broad Story
+### Step 14: Split The Broad Story
 
 Use SPDD story decomposition or a direct prompt. The reference splits the
 broad story into a deliverable Story 1 and a later Story 2.
@@ -616,7 +573,7 @@ broad story into a deliverable Story 1 and a later Story 2.
 Prompt:
 
 ```text
-Split @requirements/enhancement-token-usage-billing-story.md into two independent
+Split @./requirements/enhancement-token-usage-billing-story.md into two independent
 INVEST-style stories:
 
 1. Story 1: Multi-Plan Billing Foundation & Model-Aware Pricing.
@@ -627,34 +584,34 @@ INVEST-style stories:
 
 Keep each story concise with Background, Business Value, Scope In, Scope Out,
 and Acceptance Criteria.
-Delete requirements/enhancement-token-usage-billing-story.md after creating the
+Delete ./requirements/enhancement-token-usage-billing-story.md after creating the
 two story files.
 ```
 
 Expected files:
 
 ```text
-requirements/[User-story-1]Multi-Plan-Billing-Foundation-&-Model-Aware-Pricing.md
-requirements/[User-story-2]Enterprise-Plan-Volume-Based-Tiered-Billing.md
+./requirements/[User-story-1]Multi-Plan-Billing-Foundation-&-Model-Aware-Pricing.md
+./requirements/[User-story-2]Enterprise-Plan-Volume-Based-Tiered-Billing.md
 ```
 
 Checkpoint:
 
 ```bash
-git add requirements
+git add .
 git commit -m "[001] feat: split one story into two to ensure the singularity of responsibilities and appropriate complexity"
 ```
 
-### Step 14: Generate Enhancement Analysis
+### Step 15: Generate Enhancement Analysis
 
 Prompt:
 
 ```text
-$spdd-analysis @requirements/[User-story-1]Multi-Plan-Billing-Foundation-&-Model-Aware-Pricing.md
-
-Save the generated analysis as:
-spdd/analysis/GGQPA-001-202603191100-[Analysis]-multi-plan-billing-model-aware-pricing.md
+$spdd-analysis @./requirements/[User-story-1]Multi-Plan-Billing-Foundation-&-Model-Aware-Pricing.md
 ```
+
+Generated analysis file:
+`./spdd/analysis/GGQPA-001-{timestamp}-[Analysis]-multi-plan-billing-model-aware-pricing.md`
 
 Review for:
 
@@ -667,20 +624,20 @@ Review for:
 Checkpoint:
 
 ```bash
-git add spdd/analysis/GGQPA-001-202603191100-[Analysis]-multi-plan-billing-model-aware-pricing.md
+git add .
 git commit -m "[001] feat: generate an analysis doc for enhanced story"
 ```
 
-### Step 15: Generate Enhancement REASONS Canvas
+### Step 16: Generate Enhancement REASONS Canvas
 
 Prompt:
 
 ```text
-$spdd-reasons-canvas @spdd/analysis/GGQPA-001-202603191100-[Analysis]-multi-plan-billing-model-aware-pricing.md
-
-Save the generated structured prompt as:
-spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
+$spdd-reasons-canvas @./spdd/analysis/GGQPA-001-{timestamp}-[Analysis]-multi-plan-billing-model-aware-pricing.md
 ```
+
+Generated structured prompt file:
+`./spdd/prompt/GGQPA-001-{timestamp}-[Feat]-multi-plan-billing-model-aware-pricing.md`
 
 At this point the reference canvas still allowed `bills.model_id` to be nullable
 for backward compatibility. Do not apply the `fast-model` default yet; that is a
@@ -689,16 +646,16 @@ later prompt-first update.
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
+git add .
 git commit -m "[001] feat: generated a structured prompt based on the analysis doc"
 ```
 
-### Step 16: Generate Enhancement Code
+### Step 17: Generate Enhancement Code
 
 Prompt:
 
 ```text
-$spdd-generate @spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
+$spdd-generate @./spdd/prompt/GGQPA-001-{timestamp}-[Feat]-multi-plan-billing-model-aware-pricing.md
 
 Generate the code for Story 1 only.
 Do not implement Enterprise tiered billing.
@@ -714,9 +671,9 @@ Expected changes:
 - Add `BillingContext`
 - Add `BillingStrategy`, `StandardBillingStrategy`, `PremiumBillingStrategy`, and `BillingStrategyFactory`
 - Add `ModelPricingNotFoundException`
-- Add `V2__Add_model_pricing.sql`
+- Add `./src/main/resources/db/migration/V2__Add_model_pricing.sql`
 - Update existing tests enough to compile
-- Add `src/test/resources/application.yml` if needed for H2/Flyway test setup
+- Add `./src/test/resources/application.yml` if needed for H2/Flyway test setup
 
 Verify:
 
@@ -727,11 +684,11 @@ Verify:
 Checkpoint:
 
 ```bash
-git add src
+git add .
 git commit -m "[001] feat: generate the codes based on the structured prompt"
 ```
 
-### Step 17: Generate Functional API Test Script
+### Step 18: Generate Functional API Test Script
 
 Generate the optional API test skill if it is not present:
 
@@ -744,7 +701,7 @@ Prompt:
 ```text
 $spdd-api-test
 
-Generate a self-contained bash script at scripts/test-api.sh for the current
+Generate a self-contained bash script at ./scripts/test-api.sh for the current
 POST /api/usage API. Cover:
 - validation errors
 - Standard plan model-aware overage
@@ -763,17 +720,17 @@ docker compose up -d
 In another terminal:
 
 ```bash
-sh scripts/test-api.sh
+sh ./scripts/test-api.sh
 ```
 
 Checkpoint:
 
 ```bash
-git add .agents/skills/spdd-api-test scripts/test-api.sh
+git add .
 git commit -m "[001] feat: generate functional testing shell script by the spdd api test command"
 ```
 
-### Step 18: Refactor Remaining Magic Numbers
+### Step 19: Refactor Remaining Magic Numbers
 
 The article calls out magic numbers in `BillingServiceImpl.calculateRemainingQuota`.
 Refactor code first, then sync the prompt.
@@ -781,7 +738,7 @@ Refactor code first, then sync the prompt.
 Prompt:
 
 ```text
-@src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java
+@./src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java
 
 In calculateRemainingQuota, extract magic numbers used for month-boundary
 calculation into meaningful constants. Do not change observable behavior.
@@ -790,7 +747,7 @@ calculation into meaningful constants. Do not change observable behavior.
 Follow-up prompt:
 
 ```text
-$spdd-sync @spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
+$spdd-sync @./spdd/prompt/GGQPA-001-{timestamp}-[Feat]-multi-plan-billing-model-aware-pricing.md
 
 Sync the magic-number refactor back into the structured prompt.
 ```
@@ -798,26 +755,26 @@ Sync the magic-number refactor back into the structured prompt.
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java
+git add .
 git commit -m "[001] feat: magic number refactoring"
 ```
 
-### Step 19: Generate The Enhancement Test Prompt
+### Step 20: Generate The Enhancement Test Prompt
 
 Prompt:
 
 ```text
 Based on the implementation details prompt
-@spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
-combined with the template @spdd/template/TEST-SCENARIOS-TEMPLATE.md,
+@./spdd/prompt/GGQPA-001-{timestamp}-[Feat]-multi-plan-billing-model-aware-pricing.md
+combined with the template @./spdd/template/TEST-SCENARIOS-TEMPLATE.md,
 generate a test prompt file:
-spdd/prompt/GGQPA-001-202603191105-[Test]-multi-plan-billing-model-aware-pricing.md
+./spdd/prompt/GGQPA-001-{timestamp}-[Test]-multi-plan-billing-model-aware-pricing.md
 ```
 
 Follow-up prompt:
 
 ```text
-@spdd/prompt/GGQPA-001-202603191105-[Test]-multi-plan-billing-model-aware-pricing.md
+@./spdd/prompt/GGQPA-001-{timestamp}-[Test]-multi-plan-billing-model-aware-pricing.md
 
 There are tests that duplicate existing ones. Compare the relevant existing tests
 and keep only new scenarios needed for model-aware Standard billing, Premium
@@ -828,29 +785,29 @@ updated DTO/mapper behavior.
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-001-202603191105-[Test]-multi-plan-billing-model-aware-pricing.md
+git add .
 git commit -m "[001] feat: generate a test structure prompt"
 ```
 
-### Step 20: Generate Enhancement Unit Tests
+### Step 21: Generate Enhancement Unit Tests
 
 Prompt:
 
 ```text
 Based on the generated test prompt
-@spdd/prompt/GGQPA-001-202603191105-[Test]-multi-plan-billing-model-aware-pricing.md,
+@./spdd/prompt/GGQPA-001-{timestamp}-[Test]-multi-plan-billing-model-aware-pricing.md,
 generate the corresponding unit and integration test code.
 Only add tests for scenarios not already covered.
 ```
 
 Expected new tests:
 
-- `service/strategy/BillingStrategyFactoryTest`
-- `service/strategy/StandardBillingStrategyTest`
-- `service/strategy/PremiumBillingStrategyTest`
-- `infrastructure/persistence/JpaModelPricingRepositoryAdapterTest`
-- `infrastructure/persistence/mapper/ModelPricingMapperTest`
-- `infrastructure/persistence/mapper/PricingPlanMapperTest`
+- `./src/test/java/org/tw/token_billing/service/strategy/BillingStrategyFactoryTest.java`
+- `./src/test/java/org/tw/token_billing/service/strategy/StandardBillingStrategyTest.java`
+- `./src/test/java/org/tw/token_billing/service/strategy/PremiumBillingStrategyTest.java`
+- `./src/test/java/org/tw/token_billing/infrastructure/persistence/JpaModelPricingRepositoryAdapterTest.java`
+- `./src/test/java/org/tw/token_billing/infrastructure/persistence/mapper/ModelPricingMapperTest.java`
+- `./src/test/java/org/tw/token_billing/infrastructure/persistence/mapper/PricingPlanMapperTest.java`
 - updates to controller, integration, and billing service tests
 
 Verify:
@@ -862,18 +819,18 @@ Verify:
 Checkpoint:
 
 ```bash
-git add src/test
+git add .
 git commit -m "[001] feat: generate all the tests"
 ```
 
-### Step 21: Prompt-First Update For Required `model_id`
+### Step 22: Prompt-First Update For Required `model_id`
 
 This is a business/behavior correction. Update the prompt first.
 
 Prompt:
 
 ```text
-$spdd-prompt-update @spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
+$spdd-prompt-update @./spdd/prompt/GGQPA-001-{timestamp}-[Feat]-multi-plan-billing-model-aware-pricing.md
 
 model_id is a required field, and its default value is fast-model.
 Based on this decision, update the corresponding parts of the structured prompt.
@@ -888,16 +845,16 @@ Required updates:
 Checkpoint:
 
 ```bash
-git add spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
+git add .
 git commit -m "[001] feat: update the structured prompt to make model_id a required field with a default value of 'fast-model' to ensure backward compatibility with existing bills."
 ```
 
-### Step 22: Generate Code From The Updated Prompt
+### Step 23: Generate Code From The Updated Prompt
 
 Prompt:
 
 ```text
-$spdd-generate @spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
+$spdd-generate @./spdd/prompt/GGQPA-001-{timestamp}-[Feat]-multi-plan-billing-model-aware-pricing.md
 
 Apply only the code changes required by the updated model_id default decision.
 Do not regenerate unrelated files.
@@ -905,7 +862,7 @@ Do not regenerate unrelated files.
 
 Expected code changes:
 
-- `src/main/resources/db/migration/V2__Add_model_pricing.sql`
+- `./src/main/resources/db/migration/V2__Add_model_pricing.sql`
   uses `ALTER TABLE bills ADD COLUMN model_id VARCHAR(50) NOT NULL DEFAULT 'fast-model';`
 - `BillPO.modelId` uses `@Column(name = "model_id", length = 50, nullable = false)`
 
@@ -918,11 +875,11 @@ Verify:
 Checkpoint:
 
 ```bash
-git add src/main/resources/db/migration/V2__Add_model_pricing.sql src/main/java/org/tw/token_billing/infrastructure/persistence/entity/BillPO.java
+git add .
 git commit -m "[001] feat: update the code based on the structured prompt"
 ```
 
-### Step 23: Update The API Test Command Output
+### Step 24: Update The API Test Command Output
 
 The reference enhanced the generated API test command/script so the script has a
 human-reviewable test case overview and a final result table. Update the project
@@ -931,11 +888,11 @@ skill bundle if it exists, then regenerate or patch the script.
 Prompt:
 
 ```text
-@.agents/skills/spdd-api-test/SKILL.md
-@scripts/test-api.sh
+@./.agents/skills/spdd-api-test/SKILL.md
+@./scripts/test-api.sh
 
 Enhance the API test generation guidance and the current script:
-- Add a TEST CASE OVERVIEW section near the top of scripts/test-api.sh.
+- Add a TEST CASE OVERVIEW section near the top of ./scripts/test-api.sh.
 - Track test IDs, descriptions, expected status, actual status, and pass/fail result.
 - Print a final TEST RESULTS SUMMARY table.
 - Keep the same curl-only behavior and existing scenarios.
@@ -944,13 +901,13 @@ Enhance the API test generation guidance and the current script:
 Verify:
 
 ```bash
-sh scripts/test-api.sh
+sh ./scripts/test-api.sh
 ```
 
 Checkpoint:
 
 ```bash
-git add .agents/skills/spdd-api-test scripts/test-api.sh
+git add .
 git commit -m "[001] feat: update the api test command"
 ```
 
@@ -960,7 +917,7 @@ The last four reference commits were added after the main implementation to
 support the article narrative around `/spdd-story`. Keep this order if you want
 the workshop history to stay close to `../token-billing`.
 
-### Step 24: Add The Story Command And First Initial Story
+### Step 25: Add The Story Command And First Initial Story
 
 Generate the optional story skill:
 
@@ -980,19 +937,19 @@ model-aware Standard plan overage, add Premium split-rate billing, and keep the
 architecture extensible via Strategy/Factory.
 
 Generate the Standard-plan foundation story and save it as:
-requirements/[User-story-1-initial]Multi-Plan-Billing-Foundation-&-Standard-Plan-Model-Aware-Pricing.md
+./requirements/[User-story-1-initial]Multi-Plan-Billing-Foundation-&-Standard-Plan-Model-Aware-Pricing.md
 ```
 
 Checkpoint:
 
 ```bash
-git add .agents/skills/spdd-story requirements/[User-story-1-initial]Multi-Plan-Billing-Foundation-\&-Standard-Plan-Model-Aware-Pricing.md
+git add .
 git commit -m "[001] feat: add a command for generating stories"
 ```
 
-### Step 25: Add The Initial Enhancement Idea
+### Step 26: Add The Initial Enhancement Idea
 
-Create `requirements/idea-of-the-enhancement.md`:
+Create `./requirements/idea-of-the-enhancement.md`:
 
 ```text
 # The enhancement content
@@ -1017,22 +974,22 @@ and variable, model-specific pricing. This requires several changes
 Checkpoint:
 
 ```bash
-git add requirements/idea-of-the-enhancement.md
+git add .
 git commit -m "[001] feat: add an initial idea of the enhancement"
 ```
 
-### Step 26: Generate The Second Initial Story
+### Step 27: Generate The Second Initial Story
 
 Prompt:
 
 ```text
-$spdd-story @requirements/idea-of-the-enhancement.md
+$spdd-story @./requirements/idea-of-the-enhancement.md
 
 The Standard plan foundation story already exists at:
-@requirements/[User-story-1-initial]Multi-Plan-Billing-Foundation-&-Standard-Plan-Model-Aware-Pricing.md
+@./requirements/[User-story-1-initial]Multi-Plan-Billing-Foundation-&-Standard-Plan-Model-Aware-Pricing.md
 
 Generate the Premium Plan Split-Rate Billing story as:
-requirements/[User-story-2-initial]Premium-Plan-Split-Rate-Billing.md
+./requirements/[User-story-2-initial]Premium-Plan-Split-Rate-Billing.md
 
 Also refine the first initial story if needed so the two stories have singular
 responsibilities and do not duplicate scope.
@@ -1041,17 +998,17 @@ responsibilities and do not duplicate scope.
 Checkpoint:
 
 ```bash
-git add requirements/[User-story-1-initial]Multi-Plan-Billing-Foundation-\&-Standard-Plan-Model-Aware-Pricing.md requirements/[User-story-2-initial]Premium-Plan-Split-Rate-Billing.md
+git add .
 git commit -m "[001] feat: submit another story"
 ```
 
-### Step 27: Rename Initial Story Files
+### Step 28: Rename Initial Story Files
 
 Rename the two initial story files so they match the article naming:
 
 ```bash
-git mv 'requirements/[User-story-1-initial]Multi-Plan-Billing-Foundation-&-Standard-Plan-Model-Aware-Pricing.md' 'requirements/[User-story-1-1-initial]Multi-Plan-Billing-Foundation-&-Standard-Plan-Model-Aware-Pricing.md'
-git mv 'requirements/[User-story-2-initial]Premium-Plan-Split-Rate-Billing.md' 'requirements/[User-story-1-2-initial]Premium-Plan-Split-Rate-Billing.md'
+git mv './requirements/[User-story-1-initial]Multi-Plan-Billing-Foundation-&-Standard-Plan-Model-Aware-Pricing.md' './requirements/[User-story-1-1-initial]Multi-Plan-Billing-Foundation-&-Standard-Plan-Model-Aware-Pricing.md'
+git mv './requirements/[User-story-2-initial]Premium-Plan-Split-Rate-Billing.md' './requirements/[User-story-1-2-initial]Premium-Plan-Split-Rate-Billing.md'
 ```
 
 Checkpoint:
@@ -1078,7 +1035,7 @@ docker compose up -d
 In another terminal:
 
 ```bash
-sh scripts/test-api.sh
+sh ./scripts/test-api.sh
 ```
 
 Check the resulting history:
@@ -1096,15 +1053,15 @@ git -C ../token-billing log --reverse --oneline
 Expected final generated artifact groups:
 
 ```text
-requirements/
-spdd/analysis/
-spdd/prompt/
-spdd/template/
-scripts/test-api.sh
-src/main/java/org/tw/token_billing/
-src/test/java/org/tw/token_billing/
-src/test/resources/application.yml
-.agents/skills/
+./requirements/*.md
+./spdd/analysis/GGQPA-*-{timestamp}-[Analysis]-*.md
+./spdd/prompt/GGQPA-*-{timestamp}-[*]-*.md
+./spdd/template/TEST-SCENARIOS-TEMPLATE.md
+./scripts/test-api.sh
+./src/main/java/org/tw/token_billing/
+./src/test/java/org/tw/token_billing/
+./src/test/resources/application.yml
+./.agents/skills/<skill-id>/SKILL.md
 ```
 
 ## Review Rules For The Workshop
