@@ -2,15 +2,16 @@
 
 This workshop replays the local `../token-billing` reference repository, checked
 out from [gszhangwei/token-billing](https://github.com/gszhangwei/token-billing),
-using OpenSPDD with Codex. The goal is to create your own empty repository,
-generate the initial project and every later prompt/code artifact through the
-SPDD workflow, and end with a commit history that is very close to the reference
-history in `../token-billing`.
+using the SPDD workflow from Martin Fowler's
+[Structured-Prompt-Driven Development](https://martinfowler.com/articles/structured-prompt-driven/)
+article. The goal is to create your own empty repository, generate the prompt
+and code artifacts through OpenSPDD, and end with a commit history that is very
+close to the reference history in `../token-billing`.
 
-The reference implementation in `../token-billing` is useful only as a checkpoint. Do not copy files
-from it during the exercise. Generate the artifacts
-with Codex and OpenSPDD, review them, correct the prompt first when behavior
-changes, and then commit at the same checkpoints as the reference project.
+The article focuses on the enhancement workflow. This workshop also replays the
+initial billing-service history so your local repo has the same starting point.
+The reference implementation in `../token-billing` is useful only as a checkpoint.
+Do not copy files from it during the exercise.
 
 ## Start With A New Empty Repository
 
@@ -23,16 +24,6 @@ cd ../spdd-workshop-snapshot
 
 You are now in `../spdd-workshop-snapshot`.
 Run the remaining commands from here.
-
-Use the terminal for `bash` blocks. When a step says `In Codex`, run this from
-`../spdd-workshop-snapshot`:
-
-```bash
-codex
-```
-
-Paste that prompt, continue with any `Still in Codex` prompts in the same
-session, then exit Codex and return to the shell before the next `bash` block.
 
 ## Prerequisites
 
@@ -54,80 +45,64 @@ openspdd -v
 openspdd list --all
 ```
 
-Codex uses skill invocation syntax, not the slash-command syntax shown in the
-article:
+OpenSPDD commands used in this guide:
 
-| Article command | Codex/OpenSPDD invocation |
+| Command | Purpose |
 | --- | --- |
-| `/spdd-story` | `$spdd-story` |
-| `/spdd-analysis` | `$spdd-analysis` |
-| `/spdd-reasons-canvas` | `$spdd-reasons-canvas` |
-| `/spdd-generate` | `$spdd-generate` |
-| `/spdd-api-test` | `$spdd-api-test` |
-| `/spdd-prompt-update` | `$spdd-prompt-update` |
-| `/spdd-sync` | `$spdd-sync` |
+| `spdd-story` | Split or refine enhancement ideas into focused user stories. |
+| `spdd-analysis` | Analyze a story and produce domain concepts, risks, and design direction. |
+| `spdd-reasons-canvas` | Generate the REASONS Canvas used as the implementation blueprint. |
+| `spdd-generate` | Generate or update code from the current structured prompt. |
+| `spdd-api-test` | Generate a cURL-based functional API test script. |
+| `spdd-prompt-update` | Update the structured prompt first when requirements or behavior change. |
+| `spdd-sync` | Sync code-side refactors or fixes back into the structured prompt. |
 
-OpenSPDD generates Codex skills under `.agents/skills/<skill-id>/SKILL.md`.
+OpenSPDD writes Codex skills under `.agents/skills/<skill-id>/SKILL.md`.
 For optional commands, generate the skill before invoking it.
-When you open Codex in this repo, approve the project trust prompt if Codex
-shows one. Some Codex versions need that before project skills appear.
+The first time you run `codex` in this repo, approve the project trust prompt if
+Codex shows one. Some Codex versions need that before project skills appear.
 
-## Commit Discipline
+The article's enhancement flow is: create or refine the story, clarify scope,
+run `spdd-analysis`, run `spdd-reasons-canvas`, run `spdd-generate`, keep prompt
+and code synchronized with `spdd-prompt-update` or `spdd-sync`, then add tests.
+Part 1 below is setup for recreating the article's starting system locally.
 
-After every checkpoint:
+## Expected Revisions
 
-```bash
-git status --short
-git add <changed-files>
-git commit -m "<exact message from this guide>"
-```
+Use this as a contents-style checklist for the workshop. The goal is not to
+recreate the exact reference commit history, but to use the SPDD workflow and
+arrive at a similar result.
 
-OpenSPDD and Codex may generate different timestamps or IDs. To keep the history
-readable, ask Codex to use the target filenames listed below, or rename the
-generated files before committing. The commit hashes will not match the reference
-repo, but the commit messages and behavioral slices should.
-
-Use the reference repository only after a checkpoint:
-
-```bash
-git -C ../token-billing log --reverse --oneline
-git -C ../token-billing show --stat <reference-commit>
-```
-
-## Reference Commit Map
-
-Use these commit messages in this order.
-
-| Step | Reference commit | Commit message |
-| --- | --- | --- |
-| 0 | `fdf11b9` | `[000] feat: init the repo` |
-| 1 | `47b0ae6` | `[000] feat: update the environment` |
-| 2 | `35bc97b` | `[000] feat: initialize the commands for the SPDD workflow` |
-| 3 | `b18cb4a` | `[000] feat: generate an analysis document, first round` |
-| 4 | `ac3a543` | `[000] feat: generate a structured prompt based on the analysis doc, first round` |
-| 5 | `b9bed67` | `[000] feat: communicate additional intent to the AI -- the architecture and some design practices` |
-| 6 | `0b38fc1` | `[000] feat: the first round of code generated based on the structured prompt` |
-| 7 | `1a16356` | `[000] feat: update the logic of querying customer subscription` |
-| 8 | `e184396` | `[000] feat: refactoring for calculateBill` |
-| 9 | `6d435b3` | `[000] feat: refactoring for magic numbers in the Bill` |
-| 10 | `fa90147` | `[000] feat: refactoring for all the unsed meteds` |
-| 11 | `c8e1048` | `[000] feat: add tests for all the generated codes` |
-| 12 | `b202078` | `[000] feat: add a enhancement story` |
-| 13 | `5597af7` | `[001] feat: split one story into two to ensure the singularity of responsibilities and appropriate complexity` |
-| 14 | `7113eab` | `[001] feat: generate an analysis doc for enhanced story` |
-| 15 | `c5db3f2` | `[001] feat: generated a structured prompt based on the analysis doc` |
-| 16 | `ac3e07b` | `[001] feat: generate the codes based on the structured prompt` |
-| 17 | `7d73a61` | `[001] feat: generate functional testing shell script by the spdd api test command` |
-| 18 | `56cc47e` | `[001] feat: magic number refactoring` |
-| 19 | `c910aed` | `[001] feat: generate a test structure prompt` |
-| 20 | `6461da9` | `[001] feat: generate all the tests` |
-| 21 | `904747b` | `[001] feat: update the structured prompt to make model_id a required field with a default value of 'fast-model' to ensure backward compatibility with existing bills.` |
-| 22 | `d140a0a` | `[001] feat: update the code based on the structured prompt` |
-| 23 | `41996b0` | `[001] feat: update the api test command` |
-| 24 | `44180a3` | `[001] feat: add a command for generating stories` |
-| 25 | `e5d5112` | `[001] feat: add an initial idea of the enhancement` |
-| 26 | `50e8be1` | `[001] feat: submit another story` |
-| 27 | `a847b8e` | `[001] feat: update the file name` |
+| Step | Expected revision |
+| --- | --- |
+| 0 | Create the initial Spring Boot billing service |
+| 1 | Normalize the database environment for plans and subscriptions |
+| 2 | Initialize OpenSPDD Codex skills |
+| 3 | Generate the initial analysis document |
+| 4 | Generate the initial REASONS Canvas |
+| 5 | Add architecture intent to the Canvas |
+| 6 | Generate the initial product code |
+| 7 | Correct active subscription lookup through prompt-first update |
+| 8 | Refactor `calculateBill` and sync the Canvas |
+| 9 | Extract magic numbers in `Bill` and sync the Canvas |
+| 10 | Remove unused methods and sync the Canvas |
+| 11 | Add initial tests |
+| 12 | Add the broad enhancement story |
+| 13 | Split the broad story into focused stories |
+| 14 | Generate enhancement analysis |
+| 15 | Generate enhancement REASONS Canvas |
+| 16 | Generate enhancement code |
+| 17 | Generate the functional API test script |
+| 18 | Refactor remaining magic numbers and sync the Canvas |
+| 19 | Generate the enhancement test prompt |
+| 20 | Generate enhancement unit tests |
+| 21 | Update the structured prompt for required `model_id` |
+| 22 | Generate code from the updated prompt |
+| 23 | Update the API test command output |
+| 24 | Add the story command and first initial story |
+| 25 | Add the initial enhancement idea |
+| 26 | Generate the second initial story |
+| 27 | Rename initial story files |
 
 ## Part 1: Replay The Initial Billing Service
 
@@ -137,7 +112,7 @@ the original billing service using SPDD.
 
 ### Step 0: Create The Initial Project From Empty
 
-In Codex:
+Prompt:
 
 ```text
 Bootstrap an empty repository for a Spring Boot token billing service.
@@ -179,7 +154,7 @@ Keep the package name org.tw.token_billing.
 Use ASCII text.
 ```
 
-Generate the Gradle wrapper after Codex creates `build.gradle`:
+Generate the Gradle wrapper after the AI creates `build.gradle`:
 
 ```bash
 gradle wrapper --gradle-version 8.14 --distribution-type bin
@@ -210,7 +185,7 @@ The initial seed schema stores quota and rate directly on `customers`. Update th
 environment so the later SPDD workflow starts from a normalized customer, plan,
 subscription, and bill model.
 
-In Codex:
+Prompt:
 
 ```text
 Update the initial environment for the token billing service.
@@ -237,7 +212,7 @@ git add requirements/token-usage-billing-story.md src/main/resources/db/migratio
 git commit -m "[000] feat: update the environment"
 ```
 
-### Step 2: Initialize OpenSPDD For Codex
+### Step 2: Initialize OpenSPDD Skills
 
 Generate the project-scoped SPDD skills:
 
@@ -246,7 +221,7 @@ openspdd --tool codex init
 openspdd --tool codex generate --all
 ```
 
-Expected Codex artifacts:
+Expected OpenSPDD skill artifacts:
 
 ```text
 .agents/skills/spdd-analysis/SKILL.md
@@ -256,8 +231,7 @@ Expected Codex artifacts:
 .agents/skills/spdd-sync/SKILL.md
 ```
 
-The reference repo used Cursor command files under `.cursor/commands/`. With
-Codex, commit the equivalent `.agents/skills/` files instead.
+Commit the generated `.agents/skills/` files.
 
 Checkpoint:
 
@@ -268,7 +242,7 @@ git commit -m "[000] feat: initialize the commands for the SPDD workflow"
 
 ### Step 3: Generate The Initial Analysis
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-analysis @requirements/token-usage-billing-story.md
@@ -294,7 +268,7 @@ git commit -m "[000] feat: generate an analysis document, first round"
 
 ### Step 4: Generate The Initial REASONS Canvas
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-reasons-canvas @spdd/analysis/GGQPA-XXX-202603131734-[Analysis]-token-usage-billing.md
@@ -323,7 +297,7 @@ git commit -m "[000] feat: generate a structured prompt based on the analysis do
 Before generating code, refine the canvas with the architecture rules that the
 reference repo used.
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
@@ -358,7 +332,7 @@ git commit -m "[000] feat: communicate additional intent to the AI -- the archit
 
 ### Step 6: Generate The Initial Product Code
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-generate @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
@@ -399,7 +373,7 @@ Review result: the reference changed the subscription lookup from a list of acti
 subscriptions to one optional active subscription. This is a behavior/design
 correction, so update the prompt first, then the code.
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
@@ -415,7 +389,7 @@ Update the relevant Operations sections:
 - BillingServiceImpl should call findActiveSubscription(...).orElseThrow(...).
 ```
 
-Still in Codex:
+Follow-up prompt:
 
 ```text
 $spdd-generate @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
@@ -435,7 +409,7 @@ git commit -m "[000] feat: update the logic of querying customer subscription"
 This is a non-behavioral refactor, so refactor code first and sync the canvas
 afterwards.
 
-In Codex:
+Prompt:
 
 ```text
 @src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java
@@ -447,7 +421,7 @@ Refactor calculateBill into small private methods without changing observable be
 Keep calculateBill as the orchestration method.
 ```
 
-Still in Codex:
+Follow-up prompt:
 
 ```text
 $spdd-sync @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
@@ -464,7 +438,7 @@ git commit -m "[000] feat: refactoring for calculateBill"
 
 ### Step 9: Extract Magic Numbers In `Bill`
 
-In Codex:
+Prompt:
 
 ```text
 @src/main/java/org/tw/token_billing/domain/Bill.java
@@ -476,7 +450,7 @@ Extract billing calculation magic numbers into named constants:
 Do not change billing behavior.
 ```
 
-Still in Codex:
+Follow-up prompt:
 
 ```text
 $spdd-sync @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
@@ -493,7 +467,7 @@ git commit -m "[000] feat: refactoring for magic numbers in the Bill"
 
 ### Step 10: Remove Unused Methods
 
-In Codex:
+Prompt:
 
 ```text
 Review the generated code for unused domain, DTO, and mapper methods.
@@ -505,7 +479,7 @@ Expected removals include:
 - unused toPO methods from read-only mappers where the adapter does not use them
 ```
 
-Still in Codex:
+Follow-up prompt:
 
 ```text
 $spdd-sync @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
@@ -524,7 +498,7 @@ Use the typo in the commit message to match the reference history.
 
 ### Step 11: Add Initial Tests
 
-In Codex:
+Prompt:
 
 ```text
 Create spdd/template/TEST-SCENARIOS-TEMPLATE.md.
@@ -533,7 +507,7 @@ and integration test scenarios. It should require test names in the format:
 should_return_[expected_output]_when_[action]_given_[input]
 ```
 
-Still in Codex:
+Follow-up prompt:
 
 ```text
 Based on the implementation details prompt
@@ -543,7 +517,7 @@ generate the test prompt file:
 spdd/prompt/GGQPA-XXX-202603131758-[Test]-api-token-usage-billing.md
 ```
 
-Still in Codex:
+Follow-up prompt:
 
 ```text
 Based on @spdd/prompt/GGQPA-XXX-202603131758-[Test]-api-token-usage-billing.md,
@@ -636,10 +610,10 @@ git commit -m "[000] feat: add a enhancement story"
 
 ### Step 13: Split The Broad Story
 
-Use SPDD story decomposition or a direct Codex prompt. The reference splits the
+Use SPDD story decomposition or a direct prompt. The reference splits the
 broad story into a deliverable Story 1 and a later Story 2.
 
-In Codex:
+Prompt:
 
 ```text
 Split @requirements/enhancement-token-usage-billing-story.md into two independent
@@ -673,7 +647,7 @@ git commit -m "[001] feat: split one story into two to ensure the singularity of
 
 ### Step 14: Generate Enhancement Analysis
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-analysis @requirements/[User-story-1]Multi-Plan-Billing-Foundation-&-Model-Aware-Pricing.md
@@ -699,7 +673,7 @@ git commit -m "[001] feat: generate an analysis doc for enhanced story"
 
 ### Step 15: Generate Enhancement REASONS Canvas
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-reasons-canvas @spdd/analysis/GGQPA-001-202603191100-[Analysis]-multi-plan-billing-model-aware-pricing.md
@@ -721,7 +695,7 @@ git commit -m "[001] feat: generated a structured prompt based on the analysis d
 
 ### Step 16: Generate Enhancement Code
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-generate @spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
@@ -765,7 +739,7 @@ Generate the optional API test skill if it is not present:
 openspdd --tool codex generate spdd-api-test
 ```
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-api-test
@@ -804,7 +778,7 @@ git commit -m "[001] feat: generate functional testing shell script by the spdd 
 The article calls out magic numbers in `BillingServiceImpl.calculateRemainingQuota`.
 Refactor code first, then sync the prompt.
 
-In Codex:
+Prompt:
 
 ```text
 @src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java
@@ -813,7 +787,7 @@ In calculateRemainingQuota, extract magic numbers used for month-boundary
 calculation into meaningful constants. Do not change observable behavior.
 ```
 
-Still in Codex:
+Follow-up prompt:
 
 ```text
 $spdd-sync @spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
@@ -830,7 +804,7 @@ git commit -m "[001] feat: magic number refactoring"
 
 ### Step 19: Generate The Enhancement Test Prompt
 
-In Codex:
+Prompt:
 
 ```text
 Based on the implementation details prompt
@@ -840,7 +814,7 @@ generate a test prompt file:
 spdd/prompt/GGQPA-001-202603191105-[Test]-multi-plan-billing-model-aware-pricing.md
 ```
 
-Still in Codex:
+Follow-up prompt:
 
 ```text
 @spdd/prompt/GGQPA-001-202603191105-[Test]-multi-plan-billing-model-aware-pricing.md
@@ -860,7 +834,7 @@ git commit -m "[001] feat: generate a test structure prompt"
 
 ### Step 20: Generate Enhancement Unit Tests
 
-In Codex:
+Prompt:
 
 ```text
 Based on the generated test prompt
@@ -896,7 +870,7 @@ git commit -m "[001] feat: generate all the tests"
 
 This is a business/behavior correction. Update the prompt first.
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-prompt-update @spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
@@ -920,7 +894,7 @@ git commit -m "[001] feat: update the structured prompt to make model_id a requi
 
 ### Step 22: Generate Code From The Updated Prompt
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-generate @spdd/prompt/GGQPA-001-202603191105-[Feat]-multi-plan-billing-model-aware-pricing.md
@@ -951,10 +925,10 @@ git commit -m "[001] feat: update the code based on the structured prompt"
 ### Step 23: Update The API Test Command Output
 
 The reference enhanced the generated API test command/script so the script has a
-human-reviewable test case overview and a final result table. For Codex, update
-the project skill bundle if it exists, then regenerate or patch the script.
+human-reviewable test case overview and a final result table. Update the project
+skill bundle if it exists, then regenerate or patch the script.
 
-In Codex:
+Prompt:
 
 ```text
 @.agents/skills/spdd-api-test/SKILL.md
@@ -994,7 +968,7 @@ Generate the optional story skill:
 openspdd --tool codex generate spdd-story
 ```
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-story
@@ -1049,7 +1023,7 @@ git commit -m "[001] feat: add an initial idea of the enhancement"
 
 ### Step 26: Generate The Second Initial Story
 
-In Codex:
+Prompt:
 
 ```text
 $spdd-story @requirements/idea-of-the-enhancement.md
@@ -1139,7 +1113,7 @@ src/test/resources/application.yml
   then run `$spdd-generate`.
 - Refactoring or style-only cleanup: update code first, then run `$spdd-sync`.
 - Do not manually edit generated prompt files as a shortcut during the workshop;
-  use Codex dialogue and OpenSPDD commands so the prompt remains the governed
+  use OpenSPDD commands and AI prompts so the prompt remains the governed
   artifact.
 - Review every generated artifact before committing.
 - Keep each commit focused on one SPDD checkpoint.
