@@ -45,7 +45,7 @@ openspdd -v
 openspdd list --all
 ```
 
-OpenSPDD commands used in this guide:
+Codex skills used in this guide:
 
 | Command | Project-local Codex skill file | Purpose |
 | --- | --- | --- |
@@ -54,12 +54,11 @@ OpenSPDD commands used in this guide:
 | `$spdd-reasons-canvas` | `./.agents/skills/spdd-reasons-canvas/SKILL.md` | Generate the REASONS Canvas used as the implementation blueprint. |
 | `$spdd-generate` | `./.agents/skills/spdd-generate/SKILL.md` | Generate or update code from the current structured prompt. |
 | `$spdd-api-test` | `./.agents/skills/spdd-api-test/SKILL.md` | Generate a cURL-based functional API test script. |
+| `$spdd-tests` | `./.agents/skills/spdd-tests/SKILL.md` | Generate the test prompt plus unit and integration tests from a feature prompt. |
 | `$spdd-prompt-update` | `./.agents/skills/spdd-prompt-update/SKILL.md` | Update the structured prompt first when requirements or behavior change. |
 | `$spdd-sync` | `./.agents/skills/spdd-sync/SKILL.md` | Sync code-side refactors or fixes back into the structured prompt. |
 
 OpenSPDD writes Codex skills under `./.agents/skills/<skill-id>/SKILL.md`.
-The leading dot in `./.agents` is part of the generated directory name.
-For optional commands, generate the skill before invoking it.
 The first time you run `codex` in this repo, approve the project trust prompt if
 Codex shows one. Some Codex versions need that before project skills appear.
 
@@ -157,16 +156,33 @@ also keeps the workflow instructions and agent configuration tied to this
 repository, instead of depending on whichever OpenSPDD setup happens to be
 installed on a user machine.
 
+`spdd-api-test` is optional in OpenSPDD, so generate it explicitly here with the
+other skills used by the workshop. Append the workshop extension so
+`{timestamp}` placeholders in API-test prompt paths resolve to the first matching
+file.
+
+`spdd-tests` is a custom skill, generated for this workshop, in the `custom_skills` folder.
+Copy the workshop's custom `spdd-tests` skill into the generated skills
+directory.
+
 ```bash
 openspdd --tool codex init
 openspdd --tool codex generate --all
+openspdd --tool codex generate spdd-api-test
+printf '\n\n' >> ./.agents/skills/spdd-api-test/SKILL.md
+cat ../spdd-workshop/custom_skills/spdd-api-test-extension/SKILL.md \
+  >> ./.agents/skills/spdd-api-test/SKILL.md
+mkdir -p ./.agents/skills/spdd-tests
+cp -R ../spdd-workshop/custom_skills/spdd-tests/. ./.agents/skills/spdd-tests/
 ```
 
-Expected OpenSPDD skill artifacts:
+Expected project skill artifacts:
 
 ```text
 ./.agents/skills/spdd-analysis/SKILL.md
 ./.agents/skills/spdd-analysis/agents/openai.yaml
+./.agents/skills/spdd-api-test/SKILL.md
+./.agents/skills/spdd-api-test/agents/openai.yaml
 ./.agents/skills/spdd-generate/SKILL.md
 ./.agents/skills/spdd-generate/agents/openai.yaml
 ./.agents/skills/spdd-prompt-update/SKILL.md
@@ -175,6 +191,8 @@ Expected OpenSPDD skill artifacts:
 ./.agents/skills/spdd-reasons-canvas/agents/openai.yaml
 ./.agents/skills/spdd-sync/SKILL.md
 ./.agents/skills/spdd-sync/agents/openai.yaml
+./.agents/skills/spdd-tests/SKILL.md
+./.agents/skills/spdd-tests/agents/openai.yaml
 ```
 
 Commit the generated `./.agents/skills/` files.
@@ -311,13 +329,35 @@ Expected production artifacts:
 - JPA adapters, Spring Data repositories, POs, and mappers under `./src/main/java/org/tw/token_billing/infrastructure/persistence/`
 - `./src/main/java/org/tw/token_billing/service/BillingService.java`
 - `./src/main/java/org/tw/token_billing/service/impl/BillingServiceImpl.java`
-- optional generated smoke script `./scripts/api-test.sh`
+- functional API test script `./scripts/test-api.sh`
 
-Compile before committing:
+Generate the functional API test script for the initial API. The SPDD article
+uses `/spdd-api-test` for feature verification after code generation and before
+later refactoring and cleanup. Pass the structured prompt as context and let the
+skill derive the test scenarios from the API, acceptance criteria, and
+implementation.
+
+Prompt:
+
+```text
+$spdd-api-test @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
+```
+
+Verify the generated application and functional script:
 
 ```bash
+docker compose up -d
 ./gradlew test
+./gradlew bootRun
 ```
+
+In another terminal:
+
+```bash
+sh ./scripts/test-api.sh
+```
+
+Stop the running application after the script finishes.
 
 Checkpoint:
 
@@ -458,28 +498,12 @@ git commit -m "[000] feat: refactoring for all the unused methods"
 Prompt:
 
 ```text
-Create ./spdd/template/TEST-SCENARIOS-TEMPLATE.md.
-It should define sections for controller, service, repository, DAO, model class,
-and integration test scenarios. It should require test names in the format:
-should_return_[expected_output]_when_[action]_given_[input]
+$spdd-tests @./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
 ```
 
-Follow-up prompt:
-
-```text
-Based on the implementation details prompt
-@./spdd/prompt/GGQPA-XXX-{timestamp}-[Feat]-api-token-usage-billing.md
-combined with the template @./spdd/template/TEST-SCENARIOS-TEMPLATE.md,
-generate the test prompt file:
-./spdd/prompt/GGQPA-XXX-{timestamp}-[Test]-api-token-usage-billing.md
-```
-
-Follow-up prompt:
-
-```text
-Based on @./spdd/prompt/GGQPA-XXX-{timestamp}-[Test]-api-token-usage-billing.md,
-generate the corresponding unit and integration tests for the current billing implementation.
-```
+The custom skill creates or reuses `./spdd/template/TEST-SCENARIOS-TEMPLATE.md`,
+generates the corresponding `[Test]` prompt, and then generates unit and
+integration tests from that prompt.
 
 Expected tests:
 
@@ -690,24 +714,10 @@ git commit -m "[001] feat: generate the codes based on the structured prompt"
 
 ### Step 18: Generate Functional API Test Script
 
-Generate the optional API test skill if it is not present:
-
-```bash
-openspdd --tool codex generate spdd-api-test
-```
-
 Prompt:
 
 ```text
-$spdd-api-test
-
-Generate a self-contained bash script at ./scripts/test-api.sh for the current
-POST /api/usage API. Cover:
-- validation errors
-- Standard plan model-aware overage
-- Premium plan split-rate billing
-- edge cases for zero tokens, single token side, invalid JSON, and large usage
-Use curl only. Do not require jq.
+$spdd-api-test @./spdd/prompt/GGQPA-001-{timestamp}-[Feat]-multi-plan-billing-model-aware-pricing.md
 ```
 
 Verify manually with the app running:
